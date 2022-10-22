@@ -1,15 +1,23 @@
-const env = process.env;
+import { Client } from "pg";
+import { DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT } from "./env.config";
 
-const db = {
-  host: env.DB_HOST,
-  user: env.DB_USER,
-  password: env.DB_PASSWORD,
-  database: env.DB_NAME || "programming_languages",
-  port: env.DB_PORT || 3306
-  // ssl: {
-  //   mode: "VERIFY_IDENTITY",
-  //   ca: fs.readFileSync("/etc/ssl/cert.pem", "utf-8")
-  // }
-};
+const client = new Client({
+  host: DB_HOST,
+  user: DB_USER,
+  password: DB_PASSWORD,
+  database: DB_NAME,
+  port: parseInt(DB_PORT as string, 10)
+});
 
-export default db;
+// establish connection
+client
+  .connect()
+  .then(() => console.log("postgresql connected"))
+  .catch(err => console.error("postgresql connection error: ", err));
+
+// on error catch
+client.on('error', err => {
+  console.error('something bad has happened!', err.stack)
+})
+
+export default client;

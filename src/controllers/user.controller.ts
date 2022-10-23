@@ -11,4 +11,13 @@ const registerUser = async (req: Request, res: Response, next: NextFunction) => 
   }
 }
 
-export default {registerUser}
+const loginUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const response = await UserService.LoginUserByEmail(req.body);
+  } catch(err) {
+    console.error(`Error while trying to log in user`);
+    next(err);
+  }
+}
+
+export default {registerUser, loginUser}

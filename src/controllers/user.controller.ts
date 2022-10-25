@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express"
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import UserService from "../services/user.service";
 import { ReturnResponseModel } from "../models/response.model";
 
@@ -7,7 +8,8 @@ const registerUser = async (req: Request, res: Response, next: NextFunction) => 
   try {
     let returnResponse: ReturnResponseModel = {
       code: 500,
-      message: ""
+      message: "",
+      data: {}
     };
     let data = JSON.parse(JSON.stringify(req.body));
     
@@ -26,7 +28,7 @@ const registerUser = async (req: Request, res: Response, next: NextFunction) => 
       returnResponse.message = response.message;
     }
 
-    res.status(returnResponse.code).send(returnResponse.message);
+    res.status(returnResponse.code).send(returnResponse);
   } catch(err) {
     console.error(`Error while creating a new user`, err);
     next(err);
@@ -37,7 +39,8 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     let returnResponse: ReturnResponseModel = {
       code: 500,
-      message: ""
+      message: "",
+      data: {}
     };
     const response = await UserService.LoginUserByEmail(req.body);
     const dbPassword = response.data?.rows[0]?.password || "";
@@ -46,8 +49,17 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
 
     if (response.success) {
       if (isPasswordCorrect) {
+        var token = jwt.sign(
+          { id: req.body.id }, 
+          process.env.JWT_TOKEN_SECRET || "", 
+          { expiresIn: '1h' }
+        );
+
         returnResponse.code = 201;
         returnResponse.message= "Login successful"
+        returnResponse.data= {
+          token: token
+        }
       } else {
         returnResponse.code = 400;
         returnResponse.message= "Password is not correct"
@@ -57,7 +69,7 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
       returnResponse.message = response.message;
     }
     
-    res.status(returnResponse.code).send(returnResponse.message);
+    res.status(returnResponse.code).send(returnResponse);
   } catch(err) {
     console.error(`Error while trying to log in user`);
     next(err);
